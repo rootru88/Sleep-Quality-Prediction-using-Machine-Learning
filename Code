@@ -160,29 +160,21 @@ import streamlit as st
 import joblib
 import pandas as pd
 
-# ==========================================
-# 1. LOAD THE TRAINED AI MODEL
-# ==========================================
-# Streamlit reads the frozen model file we saved in Step 5
 model = joblib.load("sleep_quality_rf_model.joblib")
 
-# ==========================================
-# 2. DESIGN THE WEB PAGE INTERFACE (UI)
-# ==========================================
+
 st.set_page_config(page_title="AI Sleep Quality Predictor", layout="centered")
 st.title("🌙 AI Sleep Quality Predictor")
 st.write("Enter your health and lifestyle metrics below to find out your true sleep quality.")
 
 st.header("📋 Your Profile Metrics")
 
-# Create two visual columns on the webpage to make it look neat
 col1, col2 = st.columns(2)
 
 with col1:
     age = st.slider("Age", min_value=18, max_value=80, value=30)
     gender_input = st.selectbox("Gender", options=["Male", "Female"])
 
-    # --- BIOLOGICAL SLIDERS (Way 1: Used for personalized text advice, NOT fed to the AI) ---
     sleep_duration = st.slider("Sleep Duration (Hours)", min_value=3.0, max_value=12.0, value=7.0, step=0.5)
     stress_level = st.slider("Stress Level (1-10)", min_value=1, max_value=10, value=5)
     heart_rate = st.slider("Resting Heart Rate (BPM)", min_value=50, max_value=100, value=70)
@@ -191,42 +183,29 @@ with col2:
     physical_activity = st.slider("Physical Activity Level (Minutes/Day)", min_value=0, max_value=120, value=45)
     daily_steps = st.slider("Daily Steps", min_value=1000, max_value=15000, value=6000, step=500)
 
-    # Blood Pressure inputs (Sbp and Dbp)
+
     sbp = st.slider("Systolic Blood Pressure (Sbp)", min_value=90, max_value=160, value=120)
     dbp = st.slider("Diastolic Blood Pressure (Dbp)", min_value=60, max_value=100, value=80)
 
     bmi_input = st.selectbox("BMI Category", options=["Normal", "Overweight", "Obese"])
     sleep_disorder_input = st.selectbox("Sleep Disorder Status", options=["None", "Sleep Apnea", "Insomnia"])
 
-    # For simplicity, we assume a default popular occupation from your dummies
     occupation_salesperson = st.checkbox("Are you a Salesperson?", value=False)
 
-# ==========================================
-# 3. PREPROCESSING USER INPUTS FOR THE MODEL
-# ==========================================
-# Translate the user's text choices into the exact numbers the model expects
 
-# Convert Gender to 0 or 1 (Matching your LabelEncoder)
 gender = 1 if gender_input == "Female" else 0
-
-# Convert BMI Category to 0, 1, or 2 (Matching your manual mapping)
 bmi_map = {"Normal": 0, "Overweight": 1, "Obese": 2}
 bmi_category = bmi_map[bmi_input]
 
-# Convert Sleep Disorder to your binary dummy feature
+
 sleep_disorder_apnea = 1 if sleep_disorder_input == "Sleep Apnea" else 0
 
-# Convert Occupation to binary dummy feature
 occ_salesperson = 1 if occupation_salesperson else 0
 
 
-# ==========================================
-# 4. THE PREDICTION ENGINE
-# ==========================================
+
 if st.button("🔮 Predict Sleep Quality", type="primary"):
 
-    # Create a single row DataFrame matching the exact feature order of your X columns
-    # NOTICE: Sleep Duration, Stress Level, and Heart Rate are NOT in this list! (Leakage protected)
     input_data = pd.DataFrame([{
         "Gender": gender,
         "Age": age,
@@ -238,17 +217,10 @@ if st.button("🔮 Predict Sleep Quality", type="primary"):
         "Occupation_Salesperson": occ_salesperson,
         "Sleep Disorder_Sleep Apnea": sleep_disorder_apnea
     }])
-
-    # Pass the clean, leak-free features to the model to get the prediction
     prediction = model.predict(input_data)[0]
 
-    # Display the result to the user with a nice layout
     st.success(f"### Predicted Sleep Quality Score: **{prediction:.1f} / 10**")
 
-    # ==========================================
-    # 5. PERSONALIZED BI_ADVICE (WAY 1 ENGINES)
-    # ==========================================
-    # Here is where we use the biological metrics to give amazing feedback!
     st.write("---")
     st.subheader("💡 Personalized Lifestyle Insights:")
 
